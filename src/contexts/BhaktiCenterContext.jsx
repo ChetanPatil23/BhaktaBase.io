@@ -19,14 +19,7 @@ export const BhaktiCenterProvider = ({ children }) => {
   useEffect(() => {
     const fetchCenters = async () => {
       try {
-        const response = await fetch(
-          `https://vigorously-better-kingfish.ngrok-free.app/center`,
-          {
-            headers: new Headers({
-              "ngrok-skip-browser-warning": "69420",
-            }),
-          }
-        );
+        const response = await fetch(`http://localhost:3000/center`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

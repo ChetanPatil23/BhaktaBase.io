@@ -23,7 +23,7 @@ const participantColumnsMock = [
     minWidth: 150,
   },
   {
-    field: "role",
+    field: "Role",
     headerName: "Role",
     flex: 1,
     minWidth: 150,
@@ -81,7 +81,7 @@ const participantColumnsMock = [
     },
   },
   {
-    field: "phone",
+    field: "contact",
     headerName: "Contact",
     flex: 1,
     minWidth: 100,
@@ -94,7 +94,7 @@ const participantColumnsMock = [
 const AddParticipantsModal = ({
   openModal,
   handleCloseModal,
-  selectedParticipantsMock,
+  selectedParticipants,
   isAssignDisabled,
   selectedService,
 }) => {
@@ -174,7 +174,7 @@ const AddParticipantsModal = ({
           </TextField>
         </Grid>
         <CenterDevoteeTable
-          rows={selectedParticipantsMock}
+          rows={selectedParticipants.users}
           columns={participantColumnsMock}
           title={selectedService}
         />

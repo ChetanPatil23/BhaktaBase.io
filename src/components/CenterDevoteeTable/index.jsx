@@ -2,17 +2,38 @@ import * as React from "react";
 import { Box, TextField, Typography } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useState } from "react";
+import { useMediaQuery, useTheme } from "@mui/material";
 
 const CenterDevoteeTable = ({ rows, title = "", columns }) => {
+  const rowsWithIds = rows?.map((row, index) => ({
+    ...row,
+    id: row._id || index,
+  }));
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredRows, setFilteredRows] = useState(rows);
+  const [filteredRows, setFilteredRows] = useState(rowsWithIds);
 
-  // Handle search input change
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const styles = isMobile
+    ? {
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        maxWidth: "140px",
+        marginRight: "10px",
+      }
+    : {}; // Apply no styles for larger screens
+
+  React.useEffect(() => {
+    setFilteredRows(rowsWithIds);
+  }, [rows]);
+
   const handleSearch = (event) => {
     const value = event.target.value;
     setSearchQuery(value);
     const query = value.toLowerCase();
-    const filtered = rows.filter((row) =>
+    const filtered = rowsWithIds.filter((row) =>
       Object.values(row).some((value) =>
         String(value).toLowerCase().includes(query)
       )
@@ -38,6 +59,7 @@ const CenterDevoteeTable = ({ rows, title = "", columns }) => {
             textAlign: { xs: "left", sm: "inherit" },
             fontSize: { xs: "1rem", sm: "1.1rem", md: "1.25rem" },
             width: { xs: "100%", sm: "auto" },
+            ...styles,
           }}
         >
           {title ? title : `Devotees (${filteredRows.length})`}

@@ -1,4 +1,4 @@
-export const API_BASE_URL = "https://vigorously-better-kingfish.ngrok-free.app";
+export const API_BASE_URL = "http://localhost:3000";
 
 export const COMMON_HEADERS = {
   "ngrok-skip-browser-warning": "69420",

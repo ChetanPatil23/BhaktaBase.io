@@ -7,10 +7,11 @@ import {
   useTheme,
   MenuItem,
   useMediaQuery,
+  CircularProgress,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+// import EditIcon from "@mui/icons-material/Edit";
+// import DeleteIcon from "@mui/icons-material/Delete";
 import { levels } from "../../constants";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import AddParticipantsModal from "./AddParticipantsModal";
@@ -40,19 +41,14 @@ const selectedParticipantsMock = [
   },
 ];
 
-const centers = {
-  "60f6c0b5e1e8b2f5dcd5c111": "Bhakti Center 1",
-  "60f6c0b5e1e8b2f5dcd5c111": "Bhakti Center 1",
-  "60f6c0b5e1e8b2f5dcd5c111": "Bhakti Center 1",
-  "60f6c0b5e1e8b2f5dcd5c111": "Bhakti Center 1",
-};
-
 const Services = () => {
   const theme = useTheme();
   const [openModal, setOpenModal] = useState(false);
+  const [sessions, setSessions] = useState([]);
   const [session, setSession] = useState("");
   const [isAssignDisabled, setIsAssignDisabled] = useState(true);
   const [selectedService, setSelectedService] = useState("");
+  const [loading, setLoading] = useState(false);
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const handleChange = (event) => {
     setSession(event.target.value);
@@ -63,19 +59,18 @@ const Services = () => {
   const [services, setServices] = useState([]);
 
   useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  useEffect(() => {
     const fetchServices = async () => {
       try {
-        console.log(centers, selectedCenter, "useeffect");
+        setLoading(true);
         const centerId =
           centers.find((el) => el.name === selectedCenter)?._id || "";
 
         const response = await fetch(
-          `https://vigorously-better-kingfish.ngrok-free.app/service?center=${centerId}`,
-          {
-            headers: new Headers({
-              "ngrok-skip-browser-warning": "69420",
-            }),
-          }
+          `http://localhost:3000/service?center/${centerId}`
         );
         console.log(response, "response");
         if (!response.ok) {
@@ -86,6 +81,8 @@ const Services = () => {
         setServices(data);
       } catch (error) {
         console.error("Error fetching services:", error);
+      } finally {
+        setLoading(false);
       }
     };
     if (session) {
@@ -100,8 +97,43 @@ const Services = () => {
   const handleViewParticipants = (params) => {
     console.log(params, "params on view");
     setSelectedService(params.row.name);
-    // setSelectedParticipants(participants);
+    fetchParticipants();
     setOpenModal(true);
+  };
+
+  const fetchParticipants = async () => {
+    try {
+      //   const centerId =
+      //     centers.find((el) => el.name === selectedCenter)?._id || "";
+      const response = await fetch(`http://localhost:3000/user`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setSelectedParticipants(data);
+    } catch (error) {
+      console.error("Error fetching participants:", error);
+    }
+  };
+
+  const fetchSessions = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/batch`
+        // {
+        //   headers: new Headers({
+        //     "ngrok-skip-browser-warning": "69420",
+        //   }),
+        // }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setSessions(data.map((el) => el.name));
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+    }
   };
 
   const columns = [
@@ -131,12 +163,12 @@ const Services = () => {
           >
             <VisibilityIcon />
           </IconButton>
-          <IconButton onClick={() => handleEdit(params.row)}>
+          {/* <IconButton onClick={() => handleEdit(params.row)}>
             <EditIcon />
           </IconButton>
           <IconButton onClick={() => handleDelete(params.row.id)}>
             <DeleteIcon />
-          </IconButton>
+          </IconButton> */}
         </Box>
       ),
     },
@@ -144,12 +176,10 @@ const Services = () => {
 
   const handleEdit = (row) => {
     console.log("Edit row:", row);
-    // Add edit functionality here
   };
 
   const handleDelete = (id) => {
     console.log("Delete row with ID:", id);
-    // Add delete functionality here
   };
 
   const handleCloseModal = () => {
@@ -189,7 +219,7 @@ const Services = () => {
             },
           }}
         >
-          {levels.map((option) => (
+          {sessions.map((option) => (
             <MenuItem key={option} value={option}>
               {option}
             </MenuItem>
@@ -206,28 +236,44 @@ const Services = () => {
             alignItems: "center",
           }}
         >
-          <DataGrid
-            rows={services.map((el, index) => {
-              return {
-                name: el.name,
-                participants: el.participants,
-                id: index,
-              };
-            })}
-            columns={columns}
-            pageSize={5}
-            rowsPerPageOptions={[5]}
-            checkboxSelection={false}
-            disableRowSelectionOnClick
-            sx={{
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f5f5f5",
-                fontWeight: "bold",
-              },
-              width: { xs: "100%", sm: "80%", md: "60%", lg: "50%" }, // Decrease width for desktop
-              maxWidth: "800px",
-            }}
-          />
+          {loading ? (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          ) : (
+            <DataGrid
+              rows={services.map((el, index) => {
+                return {
+                  name: el.name,
+                  participants: el.participants,
+                  id: index,
+                };
+              })}
+              columns={columns}
+              pageSize={5}
+              rowsPerPageOptions={[5]}
+              checkboxSelection={false}
+              disableRowSelectionOnClick
+              sx={{
+                "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: "#f5f5f5",
+                  fontWeight: "bold",
+                },
+                width: { xs: "100%", sm: "80%", md: "60%", lg: "50%" },
+                maxWidth: "800px",
+              }}
+            />
+          )}
         </Grid>
       )}
 
@@ -235,7 +281,7 @@ const Services = () => {
         selectedService={selectedService}
         openModal={openModal}
         handleCloseModal={handleCloseModal}
-        selectedParticipantsMock={selectedParticipantsMock}
+        selectedParticipants={selectedParticipants}
         isAssignDisabled={isAssignDisabled}
       />
     </Grid>
