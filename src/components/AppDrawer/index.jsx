@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Drawer,
   List,
@@ -11,21 +11,22 @@ import {
 } from "@mui/material";
 import {
   Dashboard as DashboardIcon,
-  LocationOn as LocationOnIcon,
-  BarChart as BarChartIcon,
   TempleHindu as TempleHinduIcon,
-  EmojiEvents as MilestoneIcon,
-  Flag as FlagIcon,
 } from "@mui/icons-material";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { AccountCircle as AccountCircleIcon } from "@mui/icons-material";
+import LogoutIcon from "@mui/icons-material/Logout";
+import EventIcon from "@mui/icons-material/Event";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 
 const AppDrawer = ({ openDrawer, toggleDrawer }) => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const navigate = useNavigate();
 
   const mainItems = [
     {
@@ -39,6 +40,7 @@ const AppDrawer = ({ openDrawer, toggleDrawer }) => {
   const secondaryItems = [
     { text: "Dashboard", icon: <DashboardIcon />, to: "/dashboard" },
     { text: "Services", icon: <VolunteerActivismIcon />, to: "/services" },
+    { text: "Sessions History", icon: <EventIcon />, to: "/sessions-history" },
   ];
 
   const drawerWidth = isMobile ? (openDrawer ? 240 : 0) : openDrawer ? 240 : 60;
@@ -48,6 +50,12 @@ const AppDrawer = ({ openDrawer, toggleDrawer }) => {
       toggleDrawer();
     }
   };
+
+  const handleLogout = () => {
+    navigate("/login");
+    toggleDrawer();
+  };
+
   return (
     <Drawer
       sx={{
@@ -148,6 +156,79 @@ const AppDrawer = ({ openDrawer, toggleDrawer }) => {
             />
           </ListItem>
         ))}
+        <Divider />
+
+        {/* Profile Section */}
+        <ListItem
+          button
+          onClick={handleLogout}
+          sx={{
+            backgroundColor:
+              location.pathname === "/profile" ? "#1976D2" : "transparent",
+            color: location.pathname === "/profile" ? "white" : "#115293",
+            "&:hover": {
+              backgroundColor: "#1565C0",
+              color: "white",
+            },
+            height: "48px",
+            transition: "background-color 0.3s ease, color 0.3s ease",
+          }}
+        >
+          <ListItemIcon
+            sx={{
+              color: location.pathname === "/profile" ? "white" : "inherit",
+              minWidth: openDrawer ? "56px" : "auto",
+              transition: "min-width 0.3s ease, color 0.3s ease",
+            }}
+          >
+            <AccountCircleIcon />
+          </ListItemIcon>
+          <ListItemText
+            primary="Profile"
+            sx={{
+              opacity: openDrawer ? 1 : 0,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              transition: "opacity 0.3s ease",
+            }}
+          />
+        </ListItem>
+        {isMobile && (
+          <ListItem
+            button
+            onClick={handleLogout}
+            sx={{
+              backgroundColor:
+                location.pathname === "/profile" ? "#1976D2" : "transparent",
+              color: location.pathname === "/profile" ? "white" : "#115293",
+              "&:hover": {
+                backgroundColor: "#1565C0",
+                color: "white",
+              },
+              height: "48px",
+              transition: "background-color 0.3s ease, color 0.3s ease",
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                color: location.pathname === "/profile" ? "white" : "inherit", // Active icon color
+                minWidth: openDrawer ? "56px" : "auto",
+                transition: "min-width 0.3s ease, color 0.3s ease",
+              }}
+            >
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="Logout"
+              sx={{
+                opacity: openDrawer ? 1 : 0,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                transition: "opacity 0.3s ease",
+              }}
+            />
+          </ListItem>
+        )}
       </List>
     </Drawer>
   );

@@ -75,7 +75,7 @@ const Login = () => {
           gutterBottom
           sx={{ color: "#115293", fontWeight: 600 }}
         >
-          Welcome to the {APP_NAME} Dashboard
+          Welcome to the {APP_NAME} 
         </Typography>
         <Typography
           variant="body2"
