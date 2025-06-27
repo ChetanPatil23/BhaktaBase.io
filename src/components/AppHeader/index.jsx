@@ -12,31 +12,22 @@ import {
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
-  AccountCircle,
 } from "@mui/icons-material";
 import AppDrawer from "../AppDrawer";
 import { APP_NAME } from "../../constants";
 import { useBhaktiCenter } from "../../contexts/BhaktiCenterContext";
 import { useNavigate } from "react-router-dom";
+import theme from "../../theme/theme";
+import { useMediaQuery } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const AppHeader = ({ openDrawer, setOpenDrawer }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { selectedCenter, updateCenter } = useBhaktiCenter();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const toggleDrawer = () => {
     setOpenDrawer(!openDrawer);
-  };
-
-  const handleMenuClick = (event) => {
-    setAnchorEl(event.currentTarget);
-    setIsMenuOpen(true);
-  };
-
-  const handleCloseMenu = () => {
-    setIsMenuOpen(false);
-    setAnchorEl(null);
   };
 
   const handleLogout = () => {
@@ -75,7 +66,7 @@ const AppHeader = ({ openDrawer, setOpenDrawer }) => {
           >
             {APP_NAME}
           </Typography>
-          <FormControl size="small" sx={{ minWidth: 150, ml: 2 }}>
+          <FormControl size="small">
             <Select
               value={selectedCenter}
               onChange={(e) => updateCenter(e.target.value)}
@@ -84,6 +75,13 @@ const AppHeader = ({ openDrawer, setOpenDrawer }) => {
                 background: "linear-gradient(45deg, black, transparent)",
                 ".MuiSelect-icon": { color: "#e0e0e0" },
                 "& .MuiOutlinedInput-notchedOutline": { border: 0 },
+                [theme.breakpoints.down("sm")]: {
+                  height: "28px",
+                  width: "140px",
+                },
+                [theme.breakpoints.up("md")]: {
+                  width: "170px",
+                },
               }}
             >
               <MenuItem value="Panathur">Panathur</MenuItem>
@@ -91,13 +89,11 @@ const AppHeader = ({ openDrawer, setOpenDrawer }) => {
               <MenuItem value="AECS Layout">AECS Layout</MenuItem>
             </Select>
           </FormControl>
-          <IconButton color="#e0e0e0" onClick={handleMenuClick}>
-            <AccountCircle sx={{ color: "#e0e0e0" }} />
-          </IconButton>
-          <Menu anchorEl={anchorEl} open={isMenuOpen} onClose={handleCloseMenu}>
-            <MenuItem onClick={handleCloseMenu}>Profile</MenuItem>
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
-          </Menu>
+          {!isMobile && (
+            <IconButton color="#e0e0e0" onClick={handleLogout}>
+              <LogoutIcon sx={{ color: "#e0e0e0" }} />
+            </IconButton>
+          )}
         </Toolbar>
       </AppBar>
       <AppDrawer openDrawer={openDrawer} toggleDrawer={toggleDrawer} />
