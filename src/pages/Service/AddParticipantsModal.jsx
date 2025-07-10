@@ -144,14 +144,11 @@ const AddParticipantsModal = ({
   selectedParticipants,
   selectedService,
   fetchServices,
+  setSnackbarMessage,
+  setSnackbarSeverity,
+  setSnackbarOpen,
 }) => {
-  const [level, setLevel] = React.useState("Level 1");
-  const theme = useTheme();
   const [selectedRowsWithRoles, setSelectedRowsWithRoles] = React.useState([]);
-  console.log(selectedService, "selectedService in modal");
-  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
-  const [snackbarMessage, setSnackbarMessage] = React.useState("");
-  const [snackbarSeverity, setSnackbarSeverity] = React.useState("success");
 
   React.useEffect(() => {
     if (openModal && selectedService) {
@@ -221,6 +218,7 @@ const AddParticipantsModal = ({
       const data = await response.json();
 
       setSnackbarMessage("Participants assigned successfully!");
+      handleCloseModal();
       setSnackbarSeverity("success");
       setSnackbarOpen(true);
       fetchServices();
@@ -232,13 +230,29 @@ const AddParticipantsModal = ({
     }
   };
 
+  function getReOrderedUsers() {
+    const usersWithRoles = selectedRowsWithRoles.map((row) => {
+      return {
+        ...(selectedParticipants.users?.find((user) => user._id === row.id) ||
+          []),
+        role: row.role,
+      };
+    });
+
+    const usersWithoutRoles =
+      selectedParticipants.users?.filter(
+        (user) => !selectedRowsWithRoles.some((row) => row.id === user._id)
+      ) || [];
+
+    return [...usersWithRoles, ...usersWithoutRoles];
+  }
+
   return (
     <Modal
       open={openModal}
       onClose={() => {
         handleCloseModal();
         setSelectedRowsWithRoles([]);
-        setLevel("Level 1");
       }}
     >
       <Box
@@ -282,53 +296,14 @@ const AddParticipantsModal = ({
             <CheckIcon fontSize="small" style={{ marginLeft: "5px" }} />
           </Button>
         </Box>
-        <Grid
-          item
-          size={{ xs: 12 }}
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            margin: "12px 0px",
-          }}
-        >
-          <TextField
-            select
-            fullWidth
-            required={true}
-            label={"Choose Level"}
-            name={"level"}
-            value={level}
-            onChange={(event) => setLevel(event.target.value)}
-            sx={{
-              width: "100%",
-              "& .MuiSelect-select": {
-                textAlign: "left",
-                color: theme.palette.text.primary,
-              },
-            }}
-          >
-            {levels.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
         <CenterDevoteeTable
-          rows={selectedParticipants.users}
+          rows={getReOrderedUsers()}
           columns={participantColumnsMock(
             handleRoleChange,
             selectedRowsWithRoles,
             selectedService
           )}
           title={selectedService.name}
-        />
-        <CustomSnackbar
-          open={snackbarOpen}
-          message={snackbarMessage}
-          severity={snackbarSeverity}
-          onClose={() => setSnackbarOpen(false)}
         />
       </Box>
     </Modal>

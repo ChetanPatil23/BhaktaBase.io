@@ -11,11 +11,11 @@ import {
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import CheckIcon from "@mui/icons-material/Check";
-// import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddParticipantsModal from "./AddParticipantsModal";
 import { useBhaktiCenter } from "../../contexts/BhaktiCenterContext";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
+import CustomSnackbar from "../../components/Snackbar/CustomSnackbar";
 
 const Services = () => {
   const theme = useTheme();
@@ -24,6 +24,9 @@ const Services = () => {
   const [session, setSession] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [loading, setLoading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState("success");
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const handleChange = (event) => {
     setSession(event.target.value);
@@ -148,11 +151,17 @@ const Services = () => {
             <IconButton
               size="small"
               sx={{
-                color: "lightgray",
+                "&.Mui-disabled": {
+                  backgroundColor: "green",
+                  color: "white",
+                },
+                height: "20px",
+                width: "20px",
+                marginLeft: "5px",
               }}
               disabled
             >
-              <CheckIcon />
+              <CheckIcon style={{ fontSize: "12px" }} />
             </IconButton>
           ) : (
             <span style={{ marginLeft: "34px" }}></span>
@@ -287,6 +296,15 @@ const Services = () => {
         handleCloseModal={handleCloseModal}
         selectedParticipants={selectedParticipants}
         fetchServices={fetchServices}
+        setSnackbarMessage={setSnackbarMessage}
+        setSnackbarSeverity={setSnackbarSeverity}
+        setSnackbarOpen={setSnackbarOpen}
+      />
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        severity={snackbarSeverity}
+        onClose={() => setSnackbarOpen(false)}
       />
     </Grid>
   );
