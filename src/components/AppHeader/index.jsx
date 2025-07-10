@@ -2,12 +2,19 @@ import React, { useState } from "react";
 import {
   AppBar,
   FormControl,
-  IconButton,
-  Menu,
   MenuItem,
   Select,
   Toolbar,
   Typography,
+} from "@mui/material";
+import {
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -23,6 +30,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 
 const AppHeader = ({ openDrawer, setOpenDrawer }) => {
   const { selectedCenter, updateCenter } = useBhaktiCenter();
+  const [openLogoutModal, setOpenLogoutModal] = useState(false);
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -31,7 +39,16 @@ const AppHeader = ({ openDrawer, setOpenDrawer }) => {
   };
 
   const handleLogout = () => {
+    setOpenLogoutModal(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setOpenLogoutModal(false);
     navigate("/login");
+  };
+
+  const handleCancelLogout = () => {
+    setOpenLogoutModal(false);
   };
   return (
     <>
@@ -97,6 +114,29 @@ const AppHeader = ({ openDrawer, setOpenDrawer }) => {
         </Toolbar>
       </AppBar>
       <AppDrawer openDrawer={openDrawer} toggleDrawer={toggleDrawer} />
+      <Dialog
+        open={openLogoutModal}
+        onClose={handleCancelLogout}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="logout-dialog-title">Logout Confirmation</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-dialog-description">
+            Are you sure you want to logout?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelLogout} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmLogout} color="error" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
