@@ -139,6 +139,38 @@ export const rows = [
 ];
 
 export const panathurData = [
+   {
+    id: 14,
+    devoteeName: "Vishnu Das",
+    mentorName: "Guruji",
+    phoneNumber: "9876543222",
+    foeLevel: "Level 3",
+    chantingRounds: 1,
+  },
+   {
+    id: 15,
+    devoteeName: "Vishnu Das",
+    mentorName: "Guruji",
+    phoneNumber: "9876543222",
+    foeLevel: "Level 3",
+    chantingRounds: 2,
+  },
+    {
+    id: 16,
+    devoteeName: "Vishnu Das",
+    mentorName: "Guruji",
+    phoneNumber: "9876543222",
+    foeLevel: "Level 3",
+    chantingRounds: 1,
+  },
+   {
+    id: 17,
+    devoteeName: "Vishnu Das",
+    mentorName: "Guruji",
+    phoneNumber: "9876543222",
+    foeLevel: "Level 3",
+    chantingRounds: 2,
+  },
   {
     id: 1,
     devoteeName: "Madhava Das",
@@ -146,6 +178,7 @@ export const panathurData = [
     phoneNumber: "9876543211",
     foeLevel: "Level 3",
     chantingRounds: 15,
+    register: 'Y'
   },
   {
     id: 2,
@@ -154,6 +187,7 @@ export const panathurData = [
     phoneNumber: "9123456781",
     foeLevel: "Level 2",
     chantingRounds: 10,
+    register: 'Y'
   },
   {
     id: 3,
@@ -162,6 +196,7 @@ export const panathurData = [
     phoneNumber: "9988776656",
     foeLevel: "Level 3",
     chantingRounds: 8,
+    register: 'Y'
   },
   {
     id: 4,
@@ -170,6 +205,7 @@ export const panathurData = [
     phoneNumber: "9012345679",
     foeLevel: "Level 2",
     chantingRounds: 14,
+    register: 'Y'
   },
   {
     id: 5,
@@ -178,6 +214,7 @@ export const panathurData = [
     phoneNumber: "9988776656",
     foeLevel: "Level 1",
     chantingRounds: 8,
+    register: 'Y'
   },
   {
     id: 6,
@@ -186,6 +223,7 @@ export const panathurData = [
     phoneNumber: "9012345679",
     foeLevel: "Level 2",
     chantingRounds: 14,
+    register: 'N'
   },
   {
     id: 7,
@@ -194,6 +232,7 @@ export const panathurData = [
     phoneNumber: "9123456782",
     foeLevel: "Level 2",
     chantingRounds: 12,
+    register: 'Y'
   },
   {
     id: 8,
@@ -202,10 +241,43 @@ export const panathurData = [
     phoneNumber: "9988776657",
     foeLevel: "Level 1",
     chantingRounds: 9,
+    register: 'N'
   },
 ];
 
 export const whitefieldData = [
+   {
+    id: 14,
+    devoteeName: "Vishnu Das",
+    mentorName: "Guruji",
+    phoneNumber: "9876543222",
+    foeLevel: "Level 3",
+    chantingRounds: 1,
+  },
+   {
+    id: 15,
+    devoteeName: "Vishnu Das",
+    mentorName: "Guruji",
+    phoneNumber: "9876543222",
+    foeLevel: "Level 3",
+    chantingRounds: 2,
+  },
+    {
+    id: 16,
+    devoteeName: "Vishnu Das",
+    mentorName: "Guruji",
+    phoneNumber: "9876543222",
+    foeLevel: "Level 3",
+    chantingRounds: 1,
+  },
+   {
+    id: 17,
+    devoteeName: "Vishnu Das",
+    mentorName: "Guruji",
+    phoneNumber: "9876543222",
+    foeLevel: "Level 3",
+    chantingRounds: 2,
+  },
   {
     id: 1,
     devoteeName: "Vishnu Das",

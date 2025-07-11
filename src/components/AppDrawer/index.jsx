@@ -16,7 +16,9 @@ import {
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import useOutsideClick from "../../hooks/useOutsideClick";
 import { AccountCircle as AccountCircleIcon } from "@mui/icons-material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import EventIcon from "@mui/icons-material/Event";
@@ -27,6 +29,11 @@ const AppDrawer = ({ openDrawer, toggleDrawer }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
+
+  const ref = useOutsideClick(() => {
+    if(openDrawer)
+    toggleDrawer();
+  });
 
   const mainItems = [
     {
@@ -58,6 +65,7 @@ const AppDrawer = ({ openDrawer, toggleDrawer }) => {
 
   return (
     <Drawer
+      ref={ref}
       sx={{
         width: drawerWidth,
         flexShrink: 0,
