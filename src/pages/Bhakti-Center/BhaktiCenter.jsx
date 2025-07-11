@@ -20,12 +20,34 @@ import {
   whitefieldData,
 } from "../../mockData";
 import { useBhaktiCenter } from "../../contexts/BhaktiCenterContext";
+import { CenterRegisterStatus } from "../../components/CenterRegisterStatus";
+import { ChantingRounds } from "../../components/ChantingRounds";
 
 const BhaktiCenter = () => {
   const [session, setSession] = useState("");
   const { selectedCenter } = useBhaktiCenter();
   const theme = useTheme();
   const rows = panathurData;
+
+  const counts = panathurData.reduce(
+    (acc, { register }) => {
+      if (register === "Y") acc.registered++;
+      else if (register === "N") acc.nonRegistered++;
+      return acc;
+    },
+    { registered: 0, nonRegistered: 0 }
+  );
+
+  const chantingGroups = Object.entries(
+    panathurData.reduce((acc, { chantingRounds }) => {
+      acc[chantingRounds] = (acc[chantingRounds] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([name, round]) => ({
+    name: Number(name),
+    uv: round,
+    xname: `<=${Number(name)}`,
+  }));
 
   useEffect(() => {
     setSession("");
@@ -115,6 +137,20 @@ const BhaktiCenter = () => {
             </Grid>
             <Grid item size={{ xs: 12, md: 6 }}>
               <CenterLeaderBoard rows={topPerformers} />
+            </Grid>
+            <Grid item size={{ xs: 12, md: 6 }}>
+              <CenterRegisterStatus
+                rows={[
+                  { name: "Register Devotees", value: counts.registered },
+                  {
+                    name: "Non-Register Devotees",
+                    value: counts.nonRegistered,
+                  },
+                ]}
+              />
+            </Grid>
+            <Grid item size={{ xs: 12, md: 6 }}>
+              <ChantingRounds rows={chantingGroups} />
             </Grid>
             <Grid item size={{ xs: 12 }}>
               <CenterDevoteeTable rows={rows} columns={columns} />
