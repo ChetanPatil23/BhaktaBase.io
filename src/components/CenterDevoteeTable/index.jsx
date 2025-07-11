@@ -23,7 +23,7 @@ const CenterDevoteeTable = ({ rows, title = "", columns }) => {
         maxWidth: "140px",
         marginRight: "10px",
       }
-    : {}; // Apply no styles for larger screens
+    : {};
 
   React.useEffect(() => {
     setFilteredRows(rowsWithIds);

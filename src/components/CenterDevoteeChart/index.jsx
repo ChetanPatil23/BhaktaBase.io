@@ -33,7 +33,7 @@ const CenterDevoteeChart = ({rows} ) => {
     name,
     index
   }) => {
-    const radius = outerRadius + 10; // Position the label slightly outside the pie
+    const radius = outerRadius + 10;
     const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
     const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
 

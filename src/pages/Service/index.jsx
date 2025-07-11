@@ -10,45 +10,23 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-// import EditIcon from "@mui/icons-material/Edit";
-// import DeleteIcon from "@mui/icons-material/Delete";
-import { levels } from "../../constants";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import CheckIcon from "@mui/icons-material/Check";
+import DeleteIcon from "@mui/icons-material/Delete";
 import AddParticipantsModal from "./AddParticipantsModal";
 import { useBhaktiCenter } from "../../contexts/BhaktiCenterContext";
-
-const selectedParticipantsMock = [
-  {
-    id: "1",
-    name: "Ramesh Kumar",
-    phone: "9876543210",
-    assignService: false,
-    assignCoordinator: false,
-  },
-  {
-    id: "2",
-    name: "Suresh Patel",
-    phone: "9123456789",
-    assignService: false,
-    assignCoordinator: false,
-  },
-  {
-    id: "3",
-    name: "Anita Sharma",
-    phone: "8123456789",
-    assignService: false,
-    assignCoordinator: false,
-  },
-];
+import GroupAddIcon from "@mui/icons-material/GroupAdd";
+import CustomSnackbar from "../../components/Snackbar/CustomSnackbar";
 
 const Services = () => {
   const theme = useTheme();
   const [openModal, setOpenModal] = useState(false);
   const [sessions, setSessions] = useState([]);
   const [session, setSession] = useState("");
-  const [isAssignDisabled, setIsAssignDisabled] = useState(true);
   const [selectedService, setSelectedService] = useState("");
   const [loading, setLoading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = React.useState("success");
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const handleChange = (event) => {
     setSession(event.target.value);
@@ -60,31 +38,31 @@ const Services = () => {
 
   useEffect(() => {
     fetchSessions();
+    // fetchParticipants();
   }, []);
 
-  useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        setLoading(true);
-        const centerId =
-          centers.find((el) => el.name === selectedCenter)?._id || "";
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      const centerId =
+        centers.find((el) => el.name === selectedCenter)?._id || "";
 
-        const response = await fetch(
-          `http://localhost:3000/service?center/${centerId}`
-        );
-        console.log(response, "response");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setServices(data);
-      } catch (error) {
-        console.error("Error fetching services:", error);
-      } finally {
-        setLoading(false);
+      const response = await fetch(
+        `http://localhost:3000/service?center/${centerId}`
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+
+      const data = await response.json();
+      setServices(data);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     if (session) {
       fetchServices();
     }
@@ -95,8 +73,7 @@ const Services = () => {
   }, [selectedCenter]);
 
   const handleViewParticipants = (params) => {
-    console.log(params, "params on view");
-    setSelectedService(params.row.name);
+    setSelectedService(params.row);
     fetchParticipants();
     setOpenModal(true);
   };
@@ -109,7 +86,14 @@ const Services = () => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
+      let data = await response.json();
+
+      const coordinator = selectedService.coordinator;
+      const participants = selectedService.participants;
+      if (coordinator && participants.length && data.length > 0) {
+        data = [coordinator, ...participants, ...data];
+      }
+
       setSelectedParticipants(data);
     } catch (error) {
       console.error("Error fetching participants:", error);
@@ -118,14 +102,7 @@ const Services = () => {
 
   const fetchSessions = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:3000/batch`
-        // {
-        //   headers: new Headers({
-        //     "ngrok-skip-browser-warning": "69420",
-        //   }),
-        // }
-      );
+      const response = await fetch(`http://localhost:3000/batch`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -161,14 +138,34 @@ const Services = () => {
               color: "gray",
             }}
           >
-            <VisibilityIcon />
+            <GroupAddIcon />
           </IconButton>
+
           {/* <IconButton onClick={() => handleEdit(params.row)}>
             <EditIcon />
-          </IconButton>
-          <IconButton onClick={() => handleDelete(params.row.id)}>
+          </IconButton>*/}
+          <IconButton onClick={() => handleDelete(params.row._id)}>
             <DeleteIcon />
-          </IconButton> */}
+          </IconButton>
+          {params.row.participants?.length > 0 ? (
+            <IconButton
+              size="small"
+              sx={{
+                "&.Mui-disabled": {
+                  backgroundColor: "green",
+                  color: "white",
+                },
+                height: "20px",
+                width: "20px",
+                marginLeft: "5px",
+              }}
+              disabled
+            >
+              <CheckIcon style={{ fontSize: "12px" }} />
+            </IconButton>
+          ) : (
+            <span style={{ marginLeft: "34px" }}></span>
+          )}
         </Box>
       ),
     },
@@ -178,8 +175,22 @@ const Services = () => {
     console.log("Edit row:", row);
   };
 
-  const handleDelete = (id) => {
-    console.log("Delete row with ID:", id);
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:3000/service/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      fetchServices();
+    } catch (error) {
+      console.error("Error deleting session:", error);
+    }
   };
 
   const handleCloseModal = () => {
@@ -257,6 +268,8 @@ const Services = () => {
                   name: el.name,
                   participants: el.participants,
                   id: index,
+                  coordinator: el.coordinator,
+                  _id: el._id,
                 };
               })}
               columns={columns}
@@ -282,7 +295,16 @@ const Services = () => {
         openModal={openModal}
         handleCloseModal={handleCloseModal}
         selectedParticipants={selectedParticipants}
-        isAssignDisabled={isAssignDisabled}
+        fetchServices={fetchServices}
+        setSnackbarMessage={setSnackbarMessage}
+        setSnackbarSeverity={setSnackbarSeverity}
+        setSnackbarOpen={setSnackbarOpen}
+      />
+      <CustomSnackbar
+        open={snackbarOpen}
+        message={snackbarMessage}
+        severity={snackbarSeverity}
+        onClose={() => setSnackbarOpen(false)}
       />
     </Grid>
   );

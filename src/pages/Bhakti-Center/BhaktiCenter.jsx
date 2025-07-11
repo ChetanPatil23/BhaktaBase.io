@@ -1,24 +1,10 @@
-import {
-  Grid,
-  Tabs,
-  Tab,
-  Box,
-  TextField,
-  useTheme,
-  MenuItem,
-  Typography,
-} from "@mui/material";
+import { Grid, TextField, useTheme, MenuItem, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import CenterDevoteeChart from "../../components/CenterDevoteeChart";
 import CenterLeaderBoard from "../../components/CenterLeaderBoard";
 import CenterDevoteeTable from "../../components/CenterDevoteeTable";
-import { bhaktiCenters, levels } from "../../constants";
-import {
-  AECSData,
-  columns,
-  panathurData,
-  whitefieldData,
-} from "../../mockData";
+import { levels } from "../../constants";
+import { columns, panathurData } from "../../mockData";
 import { useBhaktiCenter } from "../../contexts/BhaktiCenterContext";
 import { CenterRegisterStatus } from "../../components/CenterRegisterStatus";
 import { ChantingRounds } from "../../components/ChantingRounds";

@@ -13,6 +13,7 @@ import Attendance from "./pages/Attendance";
 import Login from "./pages/Login";
 import MainLayout from "./components/MainLayout";
 import Services from "./pages/Service";
+import SessionHistory from "./pages/SessionHistory";
 
 const App = () => {
   const [openDrawer, setOpenDrawer] = useState(false);
@@ -79,6 +80,18 @@ const App = () => {
               isSmallScreen={isSmallScreen}
             >
               <Services />
+            </MainLayout>
+          }
+        />
+        <Route
+          path="sessions-history"
+          element={
+            <MainLayout
+              openDrawer={openDrawer}
+              setOpenDrawer={setOpenDrawer}
+              isSmallScreen={isSmallScreen}
+            >
+              <SessionHistory />
             </MainLayout>
           }
         />

@@ -2,45 +2,53 @@ import React, { useState } from "react";
 import {
   AppBar,
   FormControl,
-  IconButton,
-  Menu,
   MenuItem,
   Select,
   Toolbar,
   Typography,
 } from "@mui/material";
 import {
+  IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+} from "@mui/material";
+import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
-  AccountCircle,
 } from "@mui/icons-material";
 import AppDrawer from "../AppDrawer";
 import { APP_NAME } from "../../constants";
 import { useBhaktiCenter } from "../../contexts/BhaktiCenterContext";
 import { useNavigate } from "react-router-dom";
+import theme from "../../theme/theme";
+import { useMediaQuery } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const AppHeader = ({ openDrawer, setOpenDrawer }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { selectedCenter, updateCenter } = useBhaktiCenter();
+  const [openLogoutModal, setOpenLogoutModal] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const toggleDrawer = () => {
     setOpenDrawer(!openDrawer);
   };
 
-  const handleMenuClick = (event) => {
-    setAnchorEl(event.currentTarget);
-    setIsMenuOpen(true);
-  };
-
-  const handleCloseMenu = () => {
-    setIsMenuOpen(false);
-    setAnchorEl(null);
-  };
-
   const handleLogout = () => {
+    setOpenLogoutModal(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setOpenLogoutModal(false);
     navigate("/login");
+  };
+
+  const handleCancelLogout = () => {
+    setOpenLogoutModal(false);
   };
   return (
     <>
@@ -75,7 +83,7 @@ const AppHeader = ({ openDrawer, setOpenDrawer }) => {
           >
             {APP_NAME}
           </Typography>
-          <FormControl size="small" sx={{ minWidth: 150, ml: 2 }}>
+          <FormControl size="small">
             <Select
               value={selectedCenter}
               onChange={(e) => updateCenter(e.target.value)}
@@ -84,6 +92,13 @@ const AppHeader = ({ openDrawer, setOpenDrawer }) => {
                 background: "linear-gradient(45deg, black, transparent)",
                 ".MuiSelect-icon": { color: "#e0e0e0" },
                 "& .MuiOutlinedInput-notchedOutline": { border: 0 },
+                [theme.breakpoints.down("sm")]: {
+                  height: "28px",
+                  width: "140px",
+                },
+                [theme.breakpoints.up("md")]: {
+                  width: "170px",
+                },
               }}
             >
               <MenuItem value="Panathur">Panathur</MenuItem>
@@ -91,16 +106,37 @@ const AppHeader = ({ openDrawer, setOpenDrawer }) => {
               <MenuItem value="AECS Layout">AECS Layout</MenuItem>
             </Select>
           </FormControl>
-          <IconButton color="#e0e0e0" onClick={handleMenuClick}>
-            <AccountCircle sx={{ color: "#e0e0e0" }} />
-          </IconButton>
-          <Menu anchorEl={anchorEl} open={isMenuOpen} onClose={handleCloseMenu}>
-            <MenuItem onClick={handleCloseMenu}>Profile</MenuItem>
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
-          </Menu>
+          {!isMobile && (
+            <IconButton color="#e0e0e0" onClick={handleLogout}>
+              <LogoutIcon sx={{ color: "#e0e0e0" }} />
+            </IconButton>
+          )}
         </Toolbar>
       </AppBar>
       <AppDrawer openDrawer={openDrawer} toggleDrawer={toggleDrawer} />
+      <Dialog
+        open={openLogoutModal}
+        onClose={handleCancelLogout}
+        aria-labelledby="logout-dialog-title"
+        aria-describedby="logout-dialog-description"
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle id="logout-dialog-title">Logout Confirmation</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="logout-dialog-description">
+            Are you sure you want to logout?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelLogout} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmLogout} color="error" autoFocus>
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
