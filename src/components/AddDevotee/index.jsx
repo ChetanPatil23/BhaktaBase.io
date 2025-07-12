@@ -3,13 +3,22 @@ import FormComponent from "../FormComponent";
 import {validatePhoneNumber} from "../../utils";
 import {getFormFields} from "../../constants/formFieldsConfig";
 import {fetchFromApi} from "../../constants/apiconfig.js";
+import {Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField} from "@mui/material";
 
 const AddDevotee = () => {
   const [centerOptions, setCenterOptions] = useState([]);
   const [mentorOptions, setMentorOptions] = useState([]);
   const [batchOptions, setBatchOptions] = useState([]);
+  const [newBatchName, setNewBatchName] = useState("");
+  const [openBatchDialog, setOpenBatchDialog] = useState(false);
+  const [currentLevel, setCurrentLevel] = useState(1);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const [formData, setFormData] = useState({
     devoteeName: "",
     level: "",
@@ -80,13 +89,64 @@ const AddDevotee = () => {
   }, [formData.center, centerOptions]); // Added centerOptions as dependency
 
   const handleFormChange = (newFormData) => {
-    if (newFormData.center !== formData.center) {
-      newFormData = {...newFormData, batch: ""};
-    }
-    setFormData(newFormData);
+    setFormData((prevFormData) => {
+      // If center has changed, reset the batch
+      if (newFormData.center !== prevFormData.center) {
+        return {
+          ...newFormData,
+          batch: "",  // Clear batch when center changes
+        };
+      }
+
+      // If batch selected is "+ Add New Batch", do not update here, that’s handled elsewhere
+      if (newFormData.batch === "__add_new__") {
+        return prevFormData; // Prevent form update for add-new trigger
+      }
+
+      return newFormData;
+    });
   };
 
   const fields = getFormFields(formData, centerOptions, mentorOptions, batchOptions);
+  const handleAddBatch = async () => {
+    if (!newBatchName.trim() || !formData.center) return;
+
+    try {
+      const response = await fetchFromApi("/batch", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          name: newBatchName,
+          center: formData.center,
+          currentLevel: currentLevel,
+        }),
+      });
+
+      const newBatchOption = {
+        label: response.name,
+        value: response._id,
+      };
+
+      setBatchOptions((prev) => [...prev, newBatchOption]);
+      setFormData((prev) => ({...prev, batch: response._id}));
+      setNewBatchName("");
+      setCurrentLevel(1);
+      setOpenBatchDialog(false);
+      setSnackbar({
+        open: true,
+        message: "Batch added successfully!",
+        severity: "success",
+      });
+    } catch (error) {
+      console.error("Error adding batch:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to add batch. Please try again.",
+        severity: "error",
+      });
+    }
+  };
+
 
   const handleSubmit = async (formData) => {
     if (!validatePhoneNumber(formData.phone)) {
@@ -187,12 +247,43 @@ const AddDevotee = () => {
 
   return (
       <>
+        <Dialog open={openBatchDialog} onClose={() => setOpenBatchDialog(false)}>
+          <DialogTitle>Add New Batch</DialogTitle>
+          <DialogContent>
+            <TextField
+                autoFocus
+                margin="dense"
+                label="Batch Name"
+                fullWidth
+                value={newBatchName}
+                onChange={(e) => setNewBatchName(e.target.value)}
+            />
+            <TextField
+                margin="dense"
+                label="Current Level"
+                fullWidth
+                type="number"
+                inputProps={{min: 1}}
+                value={currentLevel}
+                onChange={(e) => setCurrentLevel(Number(e.target.value))}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenBatchDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddBatch}>Add</Button>
+          </DialogActions>
+        </Dialog>
+
+
         <FormComponent
             title="Register Member"
             initialState={formData}
             fields={fields}
             onSubmit={handleSubmit}
             onFormChange={handleFormChange}
+            onAddNewBatch={() => setOpenBatchDialog(true)}
+            snackbar={snackbar}
+            setSnackbar={setSnackbar}
         />
       </>
   );

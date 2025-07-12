@@ -2,13 +2,8 @@ import React, {useEffect, useRef, useState} from "react";
 import {Box, Button, FormControlLabel, Grid, MenuItem, Paper, Switch, TextField, Typography,} from "@mui/material";
 import CustomSnackbar from "../Snackbar/CustomSnackbar";
 
-const FormComponent = ({title, initialState, fields, onSubmit, onFormChange}) => {
+const FormComponent = ({title, initialState, fields, onSubmit, onFormChange, onAddNewBatch, snackbar, setSnackbar}) => {
   const [formData, setFormData] = useState(initialState);
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: "",
-    severity: "success",
-  });
 
   const isFirstRender = useRef(true);
 
@@ -27,6 +22,12 @@ const FormComponent = ({title, initialState, fields, onSubmit, onFormChange}) =>
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    if (name === "batch" && value === "__add_new__") {
+      onAddNewBatch?.(); // trigger batch dialog
+      return; // prevent "__add_new__" from being set
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -152,10 +153,10 @@ const FormComponent = ({title, initialState, fields, onSubmit, onFormChange}) =>
         </form>
       </Paper>
       <CustomSnackbar
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          open={snackbar.open}
+          message={snackbar.message}
+          severity={snackbar.severity}
+          onClose={() => setSnackbar(prev => ({...prev, open: false}))}
       />
     </Box>
   );
