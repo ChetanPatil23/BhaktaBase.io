@@ -1,24 +1,29 @@
-import React, { useState } from "react";
-import {
-  Box,
-  TextField,
-  MenuItem,
-  Button,
-  Typography,
-  Grid,
-  Paper,
-  Switch,
-  FormControlLabel,
-} from "@mui/material";
+import React, {useEffect, useRef, useState} from "react";
+import {Box, Button, FormControlLabel, Grid, MenuItem, Paper, Switch, TextField, Typography,} from "@mui/material";
 import CustomSnackbar from "../Snackbar/CustomSnackbar";
 
-const FormComponent = ({ title, initialState, fields, onSubmit }) => {
+const FormComponent = ({title, initialState, fields, onSubmit, onFormChange}) => {
   const [formData, setFormData] = useState(initialState);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
+
+  const isFirstRender = useRef(true);
+
+  // Update local state if initialState changes from parent (e.g., reset)
+  useEffect(() => {
+    setFormData(initialState);
+  }, [initialState]);
+
+  // Inform parent of form data changes, but skip on first render
+  useEffect(() => {
+    if (!isFirstRender.current && onFormChange) {
+      onFormChange(formData);
+    }
+    isFirstRender.current = false;
+  }, [formData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -31,15 +36,16 @@ const FormComponent = ({ title, initialState, fields, onSubmit }) => {
   const isFormValid = () => {
     return fields.every((field) => {
       if (field.required) {
-        return formData[field.name];
+        const value = formData[field.name];
+        return value !== "" && value !== undefined && value !== null;
       }
       return true;
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = onSubmit(formData);
+    const result = await onSubmit(formData);
     if (result.success) {
       setSnackbar({
         open: true,
@@ -90,11 +96,17 @@ const FormComponent = ({ title, initialState, fields, onSubmit }) => {
                     value={formData[field.name]}
                     onChange={handleChange}
                   >
-                    {field.options.map((option) => (
-                      <MenuItem key={option} value={option}>
-                        {option}
-                      </MenuItem>
-                    ))}
+                    {field.options.map((option) => {
+                      const label =
+                          typeof option === "object" ? option.label : option;
+                      const value =
+                          typeof option === "object" ? option.value : option;
+                      return (
+                          <MenuItem key={value} value={value}>
+                            {label}
+                          </MenuItem>
+                      );
+                    })}
                   </TextField>
                 ) : field.type === "switch" ? (
                   <FormControlLabel

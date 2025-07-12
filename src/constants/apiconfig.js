@@ -10,7 +10,10 @@ export const fetchFromApi = async (endpoint, options = {}) => {
 
   const response = await fetch(url, { ...options, headers });
   if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+    const errorData = await response.json().catch(() => null);
+    const error = new Error(`HTTP error! status: ${response.status}`);
+    error.response = {status: response.status, data: errorData};
+    throw error;
   }
   return response.json();
 };
