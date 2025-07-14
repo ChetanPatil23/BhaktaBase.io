@@ -24,6 +24,7 @@ import {
   Paper,
   Select,
   Snackbar,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -34,7 +35,9 @@ import {
   TextField,
   Toolbar,
   Tooltip,
-  Typography
+  Typography,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import {
   BatchPrediction,
@@ -54,6 +57,11 @@ import {
 import {fetchFromApi} from "../../constants/apiconfig.js";
 
 export default function AttendanceForm() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up('lg'));
+
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -163,7 +171,6 @@ export default function AttendanceForm() {
     return attendance ? {present: attendance.present, markedAt: attendance.markedAt} : null;
   };
 
-
   const showNotification = (message, type = 'success') => {
     setNotification({message, type});
   };
@@ -184,7 +191,6 @@ export default function AttendanceForm() {
     const user = users.find(u => u._id === userId);
     const attendanceStatus = getUserAttendanceStatus(user, selectedSession);
 
-    // Don't allow selection if attendance is already marked
     if (attendanceStatus) {
       showNotification(
           `${user.name}'s attendance is already marked. Click the status to update.`,
@@ -221,27 +227,34 @@ export default function AttendanceForm() {
     }).length;
 
     return (
-        <Paper variant="outlined" sx={{mb: 3, p: 2}}>
-          <Typography variant="h6" gutterBottom>
+        <Paper variant="outlined" sx={{mb: 3, p: {xs: 1, sm: 2}}}>
+          <Typography variant={isMobile ? "subtitle1" : "h6"} gutterBottom>
             Attendance Summary
           </Typography>
-          <Box sx={{display: 'flex', gap: 2, flexWrap: 'wrap'}}>
+          <Stack
+              direction={isMobile ? "column" : "row"}
+              spacing={1}
+              sx={{flexWrap: 'wrap'}}
+          >
             <Chip
                 label={`Present: ${presentCount}`}
                 color="success"
                 icon={<CheckCircle/>}
+                size={isMobile ? "small" : "medium"}
             />
             <Chip
                 label={`Absent: ${absentCount}`}
                 color="error"
                 icon={<Cancel/>}
+                size={isMobile ? "small" : "medium"}
             />
             <Chip
                 label={`Not Marked: ${notMarkedCount}`}
                 color="default"
                 icon={<People/>}
+                size={isMobile ? "small" : "medium"}
             />
-          </Box>
+          </Stack>
         </Paper>
     );
   };
@@ -261,10 +274,8 @@ export default function AttendanceForm() {
     setSubmitting(true);
 
     try {
-      // Convert Set to Array of user IDs
       const userIds = Array.from(selectedUsers);
 
-      // Call the bulk attendance API
       const response = await fetchFromApi('/user/attendance/bulk-mark', {
         method: 'POST',
         headers: {
@@ -276,10 +287,8 @@ export default function AttendanceForm() {
         })
       });
 
-      // Handle the response
       const {results} = response;
 
-      // Show detailed notification based on results
       if (results.success.length > 0 && results.failed.length === 0) {
         showNotification(
             `✅ Successfully marked attendance for ${results.success.length} users`,
@@ -291,10 +300,8 @@ export default function AttendanceForm() {
             'warning'
         );
 
-        // Log failed attempts for debugging
         console.log('Failed attendance marks:', results.failed);
 
-        // Show specific errors for failed attempts (optional - might be too many notifications)
         if (results.failed.length <= 3) {
           results.failed.forEach(failure => {
             const failedUser = users.find(u => u._id === failure.userId);
@@ -311,7 +318,6 @@ export default function AttendanceForm() {
         );
       }
 
-      // Clear selections and reload users to reflect changes
       setSelectedUsers(new Set());
       loadUsers();
 
@@ -331,7 +337,6 @@ export default function AttendanceForm() {
       const user = users.find(u => u._id === userId);
       if (!user) return;
 
-      // Find existing attendance record
       const updatedAttendance = user.attendance.map(att => {
         if (att.session === sessionId) {
           return {...att, present: newStatus, markedAt: new Date()};
@@ -339,7 +344,6 @@ export default function AttendanceForm() {
         return att;
       });
 
-      // If no existing attendance, add new one
       if (!user.attendance.some(att => att.session === sessionId)) {
         updatedAttendance.push({
           session: sessionId,
@@ -348,7 +352,6 @@ export default function AttendanceForm() {
         });
       }
 
-      // Update user via API
       const response = await fetchFromApi(`/user/${userId}`, {
         method: 'PUT',
         headers: {
@@ -359,7 +362,6 @@ export default function AttendanceForm() {
         })
       });
 
-      // Update local state
       setUsers(prevUsers =>
           prevUsers.map(u =>
               u._id === userId
@@ -397,9 +399,8 @@ export default function AttendanceForm() {
     }
 
     if (attendanceStatus) {
-      // Already marked - show current status with click to toggle
       return (
-          <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+          <Box sx={{display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap'}}>
             <Chip
                 label={attendanceStatus.present ? 'Present' : 'Absent'}
                 size="small"
@@ -408,17 +409,18 @@ export default function AttendanceForm() {
                 onClick={() => onStatusUpdate(user._id, sessionId, !attendanceStatus.present)}
                 sx={{cursor: 'pointer'}}
             />
-            <Tooltip title={`Marked on ${new Date(attendanceStatus.markedAt).toLocaleString()}`}>
-              <Typography variant="caption" color="text.secondary">
-                {new Date(attendanceStatus.markedAt).toLocaleDateString()}
-              </Typography>
-            </Tooltip>
+            {!isMobile && (
+                <Tooltip title={`Marked on ${new Date(attendanceStatus.markedAt).toLocaleString()}`}>
+                  <Typography variant="caption" color="text.secondary">
+                    {new Date(attendanceStatus.markedAt).toLocaleDateString()}
+                  </Typography>
+                </Tooltip>
+            )}
           </Box>
       );
     }
 
     if (isSelected) {
-      // Selected but not marked - will be marked as present
       return (
           <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
             <Chip
@@ -432,7 +434,6 @@ export default function AttendanceForm() {
       );
     }
 
-    // Not selected and not marked
     return (
         <Box sx={{display: 'flex', alignItems: 'center', gap: 1}}>
           <Chip
@@ -452,11 +453,67 @@ export default function AttendanceForm() {
   const selectedBatch_obj = batches.find(c => c._id === selectedBatch);
   const selectedSession_obj = sessions.find(s => s._id === selectedSession);
 
+  // Mobile Card View for Users
+  const MobileUserCard = ({user}) => {
+    const isSelected = selectedUsers.has(user._id);
+    const attendanceStatus = getUserAttendanceStatus(user, selectedSession);
+
+    return (
+        <Card
+            variant="outlined"
+            sx={{
+              mb: 1,
+              cursor: 'pointer',
+              border: isSelected ? `2px solid ${theme.palette.primary.main}` : undefined,
+              bgcolor: isSelected ? 'action.selected' : undefined
+            }}
+            onClick={() => handleSelectUser(user._id)}
+        >
+          <CardContent sx={{p: 2, '&:last-child': {pb: 2}}}>
+            <Box sx={{display: 'flex', alignItems: 'flex-start', gap: 2}}>
+              <Checkbox
+                  checked={isSelected}
+                  onChange={() => handleSelectUser(user._id)}
+                  size="small"
+              />
+              <Box sx={{flexGrow: 1, minWidth: 0}}>
+                <Typography variant="subtitle2" sx={{fontWeight: 'medium', mb: 0.5}}>
+                  {user.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{mb: 1}}>
+                  {user.contact}
+                </Typography>
+                <AttendanceStatusCell
+                    user={user}
+                    sessionId={selectedSession}
+                    onStatusUpdate={updateAttendanceStatus}
+                />
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+    );
+  };
+
   return (
-      <Box sx={{maxWidth: '100%', mx: 'auto', p: 3}}>
-        <Paper elevation={3} sx={{p: 3}}>
-          <Box sx={{mb: 4}}>
-            <Typography variant="h4" gutterBottom sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+      <Box sx={{
+        maxWidth: '100%',
+        mx: 'auto',
+        p: {xs: 1, sm: 2, md: 3},
+        minHeight: '100vh'
+      }}>
+        <Paper elevation={3} sx={{p: {xs: 2, sm: 3}}}>
+          <Box sx={{mb: {xs: 2, sm: 4}}}>
+            <Typography
+                variant={isMobile ? "h5" : "h4"}
+                gutterBottom
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: {xs: 1, sm: 2},
+                  flexWrap: 'wrap'
+                }}
+            >
               <Groups color="primary"/>
               Attendance Management
             </Typography>
@@ -465,78 +522,78 @@ export default function AttendanceForm() {
             </Typography>
           </Box>
 
-          {/* Stats Cards */}
-          <Grid container spacing={3} sx={{mb: 3}}>
-            <Grid item xs={12} sm={6} md={3}>
+          {/* Stats Cards - Responsive Grid */}
+          <Grid container spacing={2} sx={{mb: 3}}>
+            <Grid item xs={6} sm={4} md={2.4}>
               <Card>
-                <CardContent>
-                  <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-                    <Avatar sx={{bgcolor: 'primary.main'}}>
-                      <People/>
+                <CardContent sx={{p: {xs: 1.5, sm: 2}}}>
+                  <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 1, sm: 2}}}>
+                    <Avatar sx={{bgcolor: 'primary.main', width: {xs: 32, sm: 40}, height: {xs: 32, sm: 40}}}>
+                      <People sx={{fontSize: {xs: 16, sm: 24}}}/>
                     </Avatar>
-                    <Box>
-                      <Typography variant="h6">{totalUsers}</Typography>
-                      <Typography variant="body2" color="text.secondary">Total Users</Typography>
+                    <Box sx={{minWidth: 0}}>
+                      <Typography variant={isMobile ? "body1" : "h6"}>{totalUsers}</Typography>
+                      <Typography variant="caption" color="text.secondary">Total Users</Typography>
                     </Box>
                   </Box>
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={6} sm={4} md={2.4}>
               <Card>
-                <CardContent>
-                  <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-                    <Avatar sx={{bgcolor: 'success.main'}}>
-                      <PersonAdd/>
+                <CardContent sx={{p: {xs: 1.5, sm: 2}}}>
+                  <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 1, sm: 2}}}>
+                    <Avatar sx={{bgcolor: 'success.main', width: {xs: 32, sm: 40}, height: {xs: 32, sm: 40}}}>
+                      <PersonAdd sx={{fontSize: {xs: 16, sm: 24}}}/>
                     </Avatar>
-                    <Box>
-                      <Typography variant="h6">{selectedUsers.size}</Typography>
-                      <Typography variant="body2" color="text.secondary">Selected</Typography>
+                    <Box sx={{minWidth: 0}}>
+                      <Typography variant={isMobile ? "body1" : "h6"}>{selectedUsers.size}</Typography>
+                      <Typography variant="caption" color="text.secondary">Selected</Typography>
                     </Box>
                   </Box>
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={6} sm={4} md={2.4}>
               <Card>
-                <CardContent>
-                  <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-                    <Avatar sx={{bgcolor: 'info.main'}}>
-                      <LocationOn/>
+                <CardContent sx={{p: {xs: 1.5, sm: 2}}}>
+                  <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 1, sm: 2}}}>
+                    <Avatar sx={{bgcolor: 'info.main', width: {xs: 32, sm: 40}, height: {xs: 32, sm: 40}}}>
+                      <LocationOn sx={{fontSize: {xs: 16, sm: 24}}}/>
                     </Avatar>
-                    <Box>
-                      <Typography variant="h6">{centers.length}</Typography>
-                      <Typography variant="body2" color="text.secondary">Centers</Typography>
+                    <Box sx={{minWidth: 0}}>
+                      <Typography variant={isMobile ? "body1" : "h6"}>{centers.length}</Typography>
+                      <Typography variant="caption" color="text.secondary">Centers</Typography>
                     </Box>
                   </Box>
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={6} sm={4} md={2.4}>
               <Card>
-                <CardContent>
-                  <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-                    <Avatar sx={{bgcolor: 'primary.mainnpm'}}>
-                      <BatchPrediction/>
+                <CardContent sx={{p: {xs: 1.5, sm: 2}}}>
+                  <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 1, sm: 2}}}>
+                    <Avatar sx={{bgcolor: 'primary.main', width: {xs: 32, sm: 40}, height: {xs: 32, sm: 40}}}>
+                      <BatchPrediction sx={{fontSize: {xs: 16, sm: 24}}}/>
                     </Avatar>
-                    <Box>
-                      <Typography variant="h6">{batches.length}</Typography>
-                      <Typography variant="body2" color="text.secondary">Batches</Typography>
+                    <Box sx={{minWidth: 0}}>
+                      <Typography variant={isMobile ? "body1" : "h6"}>{batches.length}</Typography>
+                      <Typography variant="caption" color="text.secondary">Batches</Typography>
                     </Box>
                   </Box>
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={6} sm={4} md={2.4}>
               <Card>
-                <CardContent>
-                  <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-                    <Avatar sx={{bgcolor: 'warning.main'}}>
-                      <Event/>
+                <CardContent sx={{p: {xs: 1.5, sm: 2}}}>
+                  <Box sx={{display: 'flex', alignItems: 'center', gap: {xs: 1, sm: 2}}}>
+                    <Avatar sx={{bgcolor: 'warning.main', width: {xs: 32, sm: 40}, height: {xs: 32, sm: 40}}}>
+                      <Event sx={{fontSize: {xs: 16, sm: 24}}}/>
                     </Avatar>
-                    <Box>
-                      <Typography variant="h6">{sessions.length}</Typography>
-                      <Typography variant="body2" color="text.secondary">Sessions</Typography>
+                    <Box sx={{minWidth: 0}}>
+                      <Typography variant={isMobile ? "body1" : "h6"}>{sessions.length}</Typography>
+                      <Typography variant="caption" color="text.secondary">Sessions</Typography>
                     </Box>
                   </Box>
                 </CardContent>
@@ -544,10 +601,10 @@ export default function AttendanceForm() {
             </Grid>
           </Grid>
 
-          {/* Primary Filters */}
-          <Grid container spacing={3} sx={{mb: 3}}>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
+          {/* Primary Filters - Responsive Grid */}
+          <Grid container spacing={2} sx={{mb: 3}}>
+            <Grid item xs={12} md={4} width={300}>
+              <FormControl fullWidth size={isMobile ? "small" : "medium"}>
                 <InputLabel>Center</InputLabel>
                 <Select
                     value={selectedCenter}
@@ -558,7 +615,7 @@ export default function AttendanceForm() {
                   {centers.map(center => (
                       <MenuItem key={center._id} value={center._id}>
                         <Box>
-                          <Typography>{center.name}</Typography>
+                          <Typography variant={isMobile ? "body2" : "body1"}>{center.name}</Typography>
                           <Typography variant="caption" color="text.secondary">{center.location}</Typography>
                         </Box>
                       </MenuItem>
@@ -566,19 +623,19 @@ export default function AttendanceForm() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth disabled={!selectedCenter}>
+            <Grid item xs={12} md={4} width={300}>
+              <FormControl fullWidth disabled={!selectedCenter} size={isMobile ? "small" : "medium"}>
                 <InputLabel>Batch</InputLabel>
                 <Select
                     value={selectedBatch}
                     onChange={(e) => setSelectedBatch(e.target.value)}
-                    label="Session"
+                    label="Batch"
                     startAdornment={<BatchPrediction sx={{mr: 1, color: 'text.secondary'}}/>}
                 >
                   {batches.map(batch => (
                       <MenuItem key={batch._id} value={batch._id}>
                         <Box>
-                          <Typography>{batch.name}</Typography>
+                          <Typography variant={isMobile ? "body2" : "body1"}>{batch.name}</Typography>
                           <Typography variant="caption" color="text.secondary">Current
                             Level: {batch.currentLevel}</Typography>
                         </Box>
@@ -587,8 +644,8 @@ export default function AttendanceForm() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth disabled={!selectedBatch}>
+            <Grid item xs={12} md={4} width={300}>
+              <FormControl fullWidth disabled={!selectedBatch} size={isMobile ? "small" : "medium"}>
                 <InputLabel>Session</InputLabel>
                 <Select
                     value={selectedSession}
@@ -599,7 +656,7 @@ export default function AttendanceForm() {
                   {sessions.map(session => (
                       <MenuItem key={session._id} value={session._id}>
                         <Box>
-                          <Typography>{session.name}</Typography>
+                          <Typography variant={isMobile ? "body2" : "body1"}>{session.name}</Typography>
                           <Typography variant="caption" color="text.secondary">Conductor
                             Name: {session.conductor.name}</Typography>
                         </Box>
@@ -615,7 +672,7 @@ export default function AttendanceForm() {
             <Box sx={{display: 'flex', alignItems: 'center', p: 2, cursor: 'pointer'}}
                  onClick={() => setFiltersExpanded(!filtersExpanded)}>
               <FilterList sx={{mr: 1}}/>
-              <Typography variant="h6" sx={{flexGrow: 1}}>
+              <Typography variant={isMobile ? "body1" : "h6"} sx={{flexGrow: 1}}>
                 Advanced Filters
               </Typography>
               {filtersExpanded ? <ExpandLess/> : <ExpandMore/>}
@@ -624,7 +681,7 @@ export default function AttendanceForm() {
               <Divider/>
               <Box sx={{p: 2}}>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={6}>
                     <TextField
                         fullWidth
                         label="Search Users"
@@ -632,6 +689,7 @@ export default function AttendanceForm() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         disabled={!selectedCenter}
                         placeholder="Name or contact number"
+                        size={isMobile ? "small" : "medium"}
                         InputProps={{
                           startAdornment: <Search sx={{mr: 1, color: 'text.secondary'}}/>
                         }}
@@ -642,17 +700,32 @@ export default function AttendanceForm() {
             </Collapse>
           </Card>
 
-          {/* Action Toolbar */}
+          {/* Action Toolbar - Responsive */}
           {selectedCenter && (
               <Paper variant="outlined" sx={{mb: 3}}>
-                <Toolbar sx={{minHeight: '64px !important'}}>
-                  <Box sx={{display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1}}>
+                <Toolbar
+                    sx={{
+                      minHeight: {xs: '56px', sm: '64px'},
+                      flexDirection: {xs: 'column', sm: 'row'},
+                      alignItems: {xs: 'stretch', sm: 'center'},
+                      gap: {xs: 1, sm: 0}
+                    }}
+                >
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    flexGrow: 1,
+                    flexWrap: 'wrap',
+                    mb: {xs: 1, sm: 0}
+                  }}>
                     {selectedCenter_obj && (
                         <Chip
                             icon={<LocationOn/>}
                             label={selectedCenter_obj.name}
                             color="primary"
                             variant="outlined"
+                            size={isMobile ? "small" : "medium"}
                         />
                     )}
                     {selectedBatch_obj && (
@@ -661,6 +734,7 @@ export default function AttendanceForm() {
                             label={selectedBatch_obj.name}
                             color="secondary"
                             variant="outlined"
+                            size={isMobile ? "small" : "medium"}
                         />
                     )}
                     {selectedSession_obj && (
@@ -669,6 +743,7 @@ export default function AttendanceForm() {
                             label={selectedSession_obj.name}
                             color="secondary"
                             variant="outlined"
+                            size={isMobile ? "small" : "medium"}
                         />
                     )}
                     {selectedUsers.size > 0 && (
@@ -676,12 +751,13 @@ export default function AttendanceForm() {
                             icon={<PersonAdd/>}
                             label={`${selectedUsers.size} selected`}
                             color="success"
+                            size={isMobile ? "small" : "medium"}
                         />
                     )}
                   </Box>
-                  <Box sx={{display: 'flex', gap: 1}}>
+                  <Box sx={{display: 'flex', gap: 1, width: {xs: '100%', sm: 'auto'}}}>
                     <Tooltip title="Refresh Data">
-                      <IconButton onClick={loadUsers} disabled={loading}>
+                      <IconButton onClick={loadUsers} disabled={loading} size={isMobile ? "small" : "medium"}>
                         <Refresh/>
                       </IconButton>
                     </Tooltip>
@@ -690,9 +766,10 @@ export default function AttendanceForm() {
                         onClick={() => setShowConfirm(true)}
                         disabled={selectedUsers.size === 0 || !selectedSession || submitting}
                         startIcon={submitting ? <CircularProgress size={20}/> : <CheckCircle/>}
-                        size="large"
+                        size={isMobile ? "small" : "large"}
+                        fullWidth={isMobile}
                     >
-                      Mark Attendance ({selectedUsers.size})
+                      {isMobile ? `Mark (${selectedUsers.size})` : `Mark Attendance (${selectedUsers.size})`}
                     </Button>
                   </Box>
                 </Toolbar>
@@ -706,89 +783,136 @@ export default function AttendanceForm() {
               <AttendanceSummary users={users} sessionId={selectedSession}/>
           )}
 
-          {/* Users Table */}
+          {/* Users Display - Table for Desktop, Cards for Mobile */}
           {selectedCenter && (
-              <TableContainer component={Paper} variant="outlined">
-                <Table stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                            checked={isAllSelected}
-                            indeterminate={isIndeterminate}
-                            onChange={handleSelectAll}
-                            disabled={loading || users.length === 0}
-                        />
-                      </TableCell>
-                      <TableCell>User</TableCell>
-                      <TableCell>Contact</TableCell>
-                      <TableCell>Status</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {loading ? (
-                        <TableRow>
-                          <TableCell colSpan={7} align="center" sx={{py: 8}}>
+              <>
+                {isMobile ? (
+                    // Mobile Card View
+                    <Box sx={{mb: 2}}>
+                      {loading ? (
+                          <Box sx={{display: 'flex', justifyContent: 'center', py: 4}}>
                             <CircularProgress/>
-                            <Typography variant="body2" sx={{mt: 2}}>Loading users...</Typography>
-                          </TableCell>
-                        </TableRow>
-                    ) : users.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} align="center" sx={{py: 8}}>
-                            <Typography variant="body1" color="text.secondary">
+                          </Box>
+                      ) : users.length === 0 ? (
+                          <Paper sx={{p: 4, textAlign: 'center'}}>
+                            <Typography variant="body1" color="text.secondary" gutterBottom>
                               No users found
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
                               Try adjusting your filters or search criteria
                             </Typography>
-                          </TableCell>
-                        </TableRow>
-                    ) : (
-                        users.map(user => {
-                          const isSelected = selectedUsers.has(user._id);
-                          return (
-                              <TableRow
-                                  key={user._id}
-                                  hover
-                                  selected={isSelected}
-                                  sx={{cursor: 'pointer'}}
-                                  onClick={() => handleSelectUser(user._id)}
-                              >
-                                <TableCell padding="checkbox">
-                                  <Checkbox
-                                      checked={isSelected}
-                                      onChange={() => handleSelectUser(user._id)}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
-                                    <Box>
-                                      <Typography variant="body2" fontWeight="medium">
-                                        {user.name}
-                                      </Typography>
-                                    </Box>
-                                  </Box>
-                                </TableCell>
-                                <TableCell>
-                                  <Typography variant="body2" fontFamily="monospace">
-                                    {user.contact}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  <AttendanceStatusCell
-                                      user={user}
-                                      sessionId={selectedSession}
-                                      onStatusUpdate={updateAttendanceStatus}
-                                  />
+                          </Paper>
+                      ) : (
+                          <>
+                            <Box sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              mb: 2,
+                              p: 2,
+                              bgcolor: 'action.hover',
+                              borderRadius: 1
+                            }}>
+                              <Checkbox
+                                  checked={isAllSelected}
+                                  indeterminate={isIndeterminate}
+                                  onChange={handleSelectAll}
+                                  disabled={loading || users.length === 0}
+                              />
+                              <Typography variant="body2" sx={{ml: 1}}>
+                                Select All ({users.length})
+                              </Typography>
+                            </Box>
+                            {users.map(user => (
+                                <MobileUserCard key={user._id} user={user}/>
+                            ))}
+                          </>
+                      )}
+                    </Box>
+                ) : (
+                    // Desktop Table View
+                    <TableContainer component={Paper} variant="outlined" sx={{mb: 2}}>
+                      <Table stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell padding="checkbox">
+                              <Checkbox
+                                  checked={isAllSelected}
+                                  indeterminate={isIndeterminate}
+                                  onChange={handleSelectAll}
+                                  disabled={loading || users.length === 0}
+                              />
+                            </TableCell>
+                            <TableCell>User</TableCell>
+                            <TableCell>Contact</TableCell>
+                            <TableCell>Status</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {loading ? (
+                              <TableRow>
+                                <TableCell colSpan={4} align="center" sx={{py: 8}}>
+                                  <CircularProgress/>
+                                  <Typography variant="body2" sx={{mt: 2}}>Loading users...</Typography>
                                 </TableCell>
                               </TableRow>
-                          );
-                        })
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                          ) : users.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={4} align="center" sx={{py: 8}}>
+                                  <Typography variant="body1" color="text.secondary">
+                                    No users found
+                                  </Typography>
+                                  <Typography variant="body2" color="text.secondary">
+                                    Try adjusting your filters or search criteria
+                                  </Typography>
+                                </TableCell>
+                              </TableRow>
+                          ) : (
+                              users.map(user => {
+                                const isSelected = selectedUsers.has(user._id);
+                                return (
+                                    <TableRow
+                                        key={user._id}
+                                        hover
+                                        selected={isSelected}
+                                        sx={{cursor: 'pointer'}}
+                                        onClick={() => handleSelectUser(user._id)}
+                                    >
+                                      <TableCell padding="checkbox">
+                                        <Checkbox
+                                            checked={isSelected}
+                                            onChange={() => handleSelectUser(user._id)}
+                                        />
+                                      </TableCell>
+                                      <TableCell>
+                                        <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+                                          <Box>
+                                            <Typography variant="body2" fontWeight="medium">
+                                              {user.name}
+                                            </Typography>
+                                          </Box>
+                                        </Box>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Typography variant="body2" fontFamily="monospace">
+                                          {user.contact}
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell>
+                                        <AttendanceStatusCell
+                                            user={user}
+                                            sessionId={selectedSession}
+                                            onStatusUpdate={updateAttendanceStatus}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                );
+                              })
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                )}
+              </>
           )}
 
           {/* Pagination */}
@@ -804,17 +928,33 @@ export default function AttendanceForm() {
                     setPage(0);
                   }}
                   rowsPerPageOptions={[5, 10, 25, 50]}
-                  showFirstButton
-                  showLastButton
+                  showFirstButton={!isMobile}
+                  showLastButton={!isMobile}
+                  labelRowsPerPage={isMobile ? "Rows:" : "Rows per page:"}
+                  sx={{
+                    '.MuiTablePagination-toolbar': {
+                      flexDirection: {xs: 'column', sm: 'row'},
+                      gap: {xs: 1, sm: 0}
+                    },
+                    '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                      fontSize: {xs: '0.75rem', sm: '0.875rem'}
+                    }
+                  }}
               />
           )}
 
-          {/* Confirmation Dialog */}
-          <Dialog open={showConfirm} onClose={() => setShowConfirm(false)} maxWidth="sm" fullWidth>
+          {/* Confirmation Dialog - Responsive */}
+          <Dialog
+              open={showConfirm}
+              onClose={() => setShowConfirm(false)}
+              maxWidth="sm"
+              fullWidth
+              fullScreen={isMobile}
+          >
             <DialogTitle sx={{pb: 1}}>
               <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
                 <CheckCircle color="success"/>
-                Confirm Attendance
+                <Typography variant={isMobile ? "h6" : "h5"}>Confirm Attendance</Typography>
               </Box>
             </DialogTitle>
             <DialogContent>
@@ -836,8 +976,18 @@ export default function AttendanceForm() {
                 This action will mark all selected users as present for the chosen session.
               </Typography>
             </DialogContent>
-            <DialogActions sx={{px: 3, pb: 2}}>
-              <Button onClick={() => setShowConfirm(false)} startIcon={<Cancel/>}>
+            <DialogActions sx={{
+              px: {xs: 2, sm: 3},
+              pb: {xs: 2, sm: 2},
+              flexDirection: {xs: 'column-reverse', sm: 'row'},
+              gap: {xs: 1, sm: 0}
+            }}>
+              <Button
+                  onClick={() => setShowConfirm(false)}
+                  startIcon={<Cancel/>}
+                  fullWidth={isMobile}
+                  size={isMobile ? "large" : "medium"}
+              >
                 Cancel
               </Button>
               <Button
@@ -845,23 +995,35 @@ export default function AttendanceForm() {
                   variant="contained"
                   disabled={submitting}
                   startIcon={submitting ? <CircularProgress size={20}/> : <CheckCircle/>}
+                  fullWidth={isMobile}
+                  size={isMobile ? "large" : "medium"}
               >
                 {submitting ? 'Processing...' : 'Confirm Attendance'}
               </Button>
             </DialogActions>
           </Dialog>
 
-          {/* Notification Snackbar */}
+          {/* Notification Snackbar - Responsive */}
           <Snackbar
               open={!!notification}
               autoHideDuration={4000}
               onClose={() => setNotification(null)}
-              anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: isMobile ? 'center' : 'right'
+              }}
+              sx={{
+                bottom: {xs: 80, sm: 24}
+              }}
           >
             <Alert
                 severity={notification?.type || 'success'}
                 variant="filled"
                 onClose={() => setNotification(null)}
+                sx={{
+                  width: {xs: '90vw', sm: 'auto'},
+                  maxWidth: {xs: '350px', sm: 'none'}
+                }}
             >
               {notification?.message}
             </Alert>
