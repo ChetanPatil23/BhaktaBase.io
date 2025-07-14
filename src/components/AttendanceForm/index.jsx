@@ -291,12 +291,12 @@ export default function AttendanceForm() {
 
       if (results.success.length > 0 && results.failed.length === 0) {
         showNotification(
-            `✅ Successfully marked attendance for ${results.success.length} users`,
+            `Successfully marked attendance for ${results.success.length} users`,
             'success'
         );
       } else if (results.success.length > 0 && results.failed.length > 0) {
         showNotification(
-            `⚠️ Marked attendance for ${results.success.length} users. ${results.failed.length} failed`,
+            `⚠Marked attendance for ${results.success.length} users. ${results.failed.length} failed`,
             'warning'
         );
 
@@ -306,14 +306,14 @@ export default function AttendanceForm() {
           results.failed.forEach(failure => {
             const failedUser = users.find(u => u._id === failure.userId);
             showNotification(
-                `❌ ${failedUser?.name || 'User'}: ${failure.error}`,
+                `${failedUser?.name || 'User'}: ${failure.error}`,
                 'error'
             );
           });
         }
       } else {
         showNotification(
-            `❌ Failed to mark attendance for all selected users`,
+            `Failed to mark attendance for all selected users`,
             'error'
         );
       }
